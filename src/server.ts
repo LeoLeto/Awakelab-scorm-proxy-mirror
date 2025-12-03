@@ -1,6 +1,12 @@
 import express from "express";
 import { ingestLicenses } from "./ingest.js";
+import licenseRouter from "./routes/license.js";
+
 const app = express();
+app.use(express.json());
+
+app.get("/health", (_req, res) => res.json({ ok: true }));
+
 app.get("/ingest/licenses", async (req, res) => {
   try {
     const report = await ingestLicenses();
@@ -10,5 +16,8 @@ app.get("/ingest/licenses", async (req, res) => {
     res.status(500).json({ ok: false, error: String(err) });
   }
 });
+
+app.use("/license", licenseRouter);
+
 const PORT = process.env.HTTP_PORT ? Number(process.env.HTTP_PORT) : 3000;
 app.listen(PORT, () => console.log(`ingest server listening ${PORT}`));

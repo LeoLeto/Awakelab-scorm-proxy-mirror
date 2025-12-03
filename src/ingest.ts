@@ -1,16 +1,15 @@
 import pLimit from "p-limit";
 import path from "path";
+import { CFG } from "./config.js";
 import {
   createPool,
-  upsertLicense,
-  insertRawRow,
   getLastFetchDate,
+  insertRawRow,
   setLastFetchDate,
+  upsertLicense,
 } from "./db.js";
 import { fetchAllLicenseDetails } from "./fetcher.js";
 import { normalizeLicenseRow } from "./normalizer.js";
-import { CFG } from "./config.js";
-import { NormalizedLicenseRow } from "./types.js";
 
 export async function ingestLicenses() {
   const pool = createPool();
