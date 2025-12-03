@@ -17,7 +17,7 @@ app.get("/ingest/licenses", async (req, res) => {
   }
 });
 
-app.use("/license", licenseRouter);
+app.use("/api", licenseRouter);
 
 const PORT = process.env.HTTP_PORT ? Number(process.env.HTTP_PORT) : 3000;
 app.listen(PORT, () => console.log(`ingest server listening ${PORT}`));
