@@ -8,7 +8,6 @@ const app = express();
 app.use(
   cors({
     origin: "http://13.37.231.30:5173",
-    credentials: true, // if you use cookies/auth
   })
 );
 app.use(express.json());
