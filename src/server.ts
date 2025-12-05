@@ -2,7 +2,15 @@ import express from "express";
 import { ingestLicenses } from "./ingest.js";
 import licenseRouter from "./routes/license.js";
 
+import cors from "cors";
+
 const app = express();
+app.use(
+  cors({
+    origin: "http://13.37.231.30:5173",
+    credentials: true, // if you use cookies/auth
+  })
+);
 app.use(express.json());
 
 app.get("/health", (_req, res) => res.json({ ok: true }));
