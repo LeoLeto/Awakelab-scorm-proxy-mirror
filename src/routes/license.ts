@@ -11,8 +11,9 @@ router.post("/license-details", async (req, res) => {
 
     const pool = createPool();
     const [rows] = await pool.query(
-      `SELECT * FROM API_REPORT_LICENSE_DETAILS WHERE license_start >= ? AND license_end <= ? LIMIT ? OFFSET ?`,
-      [date_from, date_to, pageSize, (pageNum - 1) * pageSize]
+      `SELECT * FROM API_REPORT_LICENSE_DETAILS
+   WHERE license_start <= ? AND license_end >= ? LIMIT ? OFFSET ?`,
+      [date_to, date_from, pageSize, (pageNum - 1) * pageSize]
     );
     await pool.end();
 
