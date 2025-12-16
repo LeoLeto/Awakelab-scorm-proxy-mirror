@@ -20,13 +20,37 @@ router.get("/customers", async (req, res) => {
   }
 });
 
+router.get("/products", async (req, res) => {
+  try {
+    const { customer_name } = req.query;
+    
+    if (!customer_name) {
+      return res.status(400).json({ ok: false, error: "customer_name is required" });
+    }
+
+    const pool = createPool();
+    const [rows] = await pool.query(
+      `SELECT DISTINCT product_title 
+       FROM API_REPORT_LICENSE_DETAILS 
+       WHERE customer_name = ? AND product_title IS NOT NULL 
+       ORDER BY product_title`,
+      [customer_name]
+    );
+    await pool.end();
+    res.json({ ok: true, products: rows });
+  } catch (err: any) {
+    console.error("products error", err);
+    res.status(500).json({ ok: false, error: err.message || "unexpected" });
+  }
+});
+
 router.post("/license-details", async (req, res) => {
   try {
-    const { date_from, date_to, page, customer_name } = req.body || {};
+    const { date_from, date_to, page, customer_name, product_title } = req.body || {};
     const pageNum = page ?? 1;
     const pageSize = 100;
 
-    console.log("Received request:", { date_from, date_to, page, customer_name });
+    console.log("Received request:", { date_from, date_to, page, customer_name, product_title });
 
     const pool = createPool();
     
@@ -49,6 +73,11 @@ router.post("/license-details", async (req, res) => {
     if (customer_name) {
       conditions.push(`customer_name = ?`);
       params.push(customer_name);
+    }
+    
+    if (product_title) {
+      conditions.push(`product_title = ?`);
+      params.push(product_title);
     }
     
     if (conditions.length > 0) {
