@@ -13,8 +13,13 @@ export function createPool() {
     database: CFG.DBNAME,
     waitForConnections: true,
     connectionLimit: 6,
+    queueLimit: 0,
     timezone: "Z",
     charset: "utf8mb4",
+    connectTimeout: 60000,
+    idleTimeout: 60000,
+    enableKeepAlive: true,
+    keepAliveInitialDelay: 0,
   });
 }
 
