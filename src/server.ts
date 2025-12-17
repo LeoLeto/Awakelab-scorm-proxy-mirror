@@ -1,6 +1,7 @@
 import express from "express";
 import { ingestLicenses } from "./ingest.js";
 import licenseRouter from "./routes/license.js";
+import { validateCredentials, generateToken, requireAuth } from "./auth.js";
 
 import cors from "cors";
 
@@ -17,7 +18,25 @@ app.use(express.json());
 
 app.get("/health", (_req, res) => res.json({ ok: true }));
 
-app.get("/ingest/licenses", async (req, res) => {
+// Login endpoint - no authentication required
+app.post("/api/login", (req, res) => {
+  const { username, password } = req.body;
+
+  if (!username || !password) {
+    res.status(400).json({ ok: false, error: "Username and password required" });
+    return;
+  }
+
+  if (validateCredentials(username, password)) {
+    const token = generateToken(username);
+    res.json({ ok: true, token, username });
+  } else {
+    res.status(401).json({ ok: false, error: "Invalid credentials" });
+  }
+});
+
+// Protected routes below - require authentication
+app.get("/ingest/licenses", requireAuth, async (req, res) => {
   try {
     const report = await ingestLicenses();
     res.json({ ok: true, report });
@@ -27,7 +46,7 @@ app.get("/ingest/licenses", async (req, res) => {
   }
 });
 
-app.use("/api", licenseRouter);
+app.use("/api", requireAuth, licenseRouter);
 
 const PORT = process.env.HTTP_PORT ? Number(process.env.HTTP_PORT) : 3000;
 app.listen(PORT, () => console.log(`ingest server listening ${PORT}`));
