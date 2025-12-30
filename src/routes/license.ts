@@ -54,8 +54,7 @@ router.post("/license-details", async (req, res) => {
 
     const pool = createPool();
     
-    // Build query dynamically based on provided dates and customer
-    let query = `SELECT * FROM API_REPORT_LICENSE_DETAILS`;
+    // Build WHERE clause for filtering
     const params: any[] = [];
     const conditions: string[] = [];
     
@@ -80,19 +79,24 @@ router.post("/license-details", async (req, res) => {
       params.push(product_title);
     }
     
-    if (conditions.length > 0) {
-      query += ` WHERE ` + conditions.join(' AND ');
-    }
+    const whereClause = conditions.length > 0 ? ` WHERE ` + conditions.join(' AND ') : '';
     
+    // Get total count
+    const countQuery = `SELECT COUNT(*) as total FROM API_REPORT_LICENSE_DETAILS${whereClause}`;
+    const [countResult] = await pool.query(countQuery, params);
+    const totalCount = (countResult as any)[0]?.total || 0;
+    
+    // Build paginated query
+    let query = `SELECT * FROM API_REPORT_LICENSE_DETAILS${whereClause}`;
     query += ` LIMIT ? OFFSET ?`;
-    params.push(pageSize, (pageNum - 1) * pageSize);
+    const queryParams = [...params, pageSize, (pageNum - 1) * pageSize];
     
-    console.log("Executing query:", query, params);
+    console.log("Executing query:", query, queryParams);
     
-    const [rows] = await pool.query(query, params);
+    const [rows] = await pool.query(query, queryParams);
     await pool.end();
 
-    console.log("Query successful, rows:", Array.isArray(rows) ? rows.length : 0);
+    console.log("Query successful, rows:", Array.isArray(rows) ? rows.length : 0, "of", totalCount);
     
     // Log first record to check URL fields
     if (Array.isArray(rows) && rows.length > 0) {
@@ -105,9 +109,62 @@ router.post("/license-details", async (req, res) => {
       });
     }
     
-    res.json({ ok: true, license: rows });
+    res.json({ ok: true, license: rows, total: totalCount });
   } catch (err: any) {
     console.error("license proxy error", err);
+    console.error("Error stack:", err.stack);
+    res.status(500).json({ ok: false, error: err.message || "unexpected" });
+  }
+});
+
+router.post("/license-details/export", async (req, res) => {
+  try {
+    const { date_from, date_to, customer_name, product_title } = req.body || {};
+
+    console.log("Export request:", { date_from, date_to, customer_name, product_title });
+
+    const pool = createPool();
+    
+    // Build WHERE clause for filtering (same as regular endpoint)
+    const params: any[] = [];
+    const conditions: string[] = [];
+    
+    if (date_from && date_to) {
+      conditions.push(`license_start <= ? AND license_end >= ?`);
+      params.push(date_to, date_from);
+    } else if (date_from) {
+      conditions.push(`license_end >= ?`);
+      params.push(date_from);
+    } else if (date_to) {
+      conditions.push(`license_start <= ?`);
+      params.push(date_to);
+    }
+    
+    if (customer_name) {
+      conditions.push(`customer_name = ?`);
+      params.push(customer_name);
+    }
+    
+    if (product_title) {
+      conditions.push(`product_title = ?`);
+      params.push(product_title);
+    }
+    
+    const whereClause = conditions.length > 0 ? ` WHERE ` + conditions.join(' AND ') : '';
+    
+    // Get ALL matching records (no LIMIT)
+    const query = `SELECT * FROM API_REPORT_LICENSE_DETAILS${whereClause}`;
+    
+    console.log("Executing export query:", query, params);
+    
+    const [rows] = await pool.query(query, params);
+    await pool.end();
+
+    console.log("Export query successful, rows:", Array.isArray(rows) ? rows.length : 0);
+    
+    res.json({ ok: true, license: rows });
+  } catch (err: any) {
+    console.error("license export error", err);
     console.error("Error stack:", err.stack);
     res.status(500).json({ ok: false, error: err.message || "unexpected" });
   }

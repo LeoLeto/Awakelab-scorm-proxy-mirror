@@ -1,3 +1,4 @@
+import "dotenv/config";
 import express from "express";
 import { ingestLicenses } from "./ingest.js";
 import licenseRouter from "./routes/license.js";
