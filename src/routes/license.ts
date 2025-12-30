@@ -59,13 +59,13 @@ router.post("/license-details", async (req, res) => {
     const conditions: string[] = [];
     
     if (date_from && date_to) {
-      conditions.push(`license_start <= ? AND license_end >= ?`);
-      params.push(date_to, date_from);
+      conditions.push(`tracking_first_access >= ? AND tracking_first_access <= ?`);
+      params.push(date_from, date_to);
     } else if (date_from) {
-      conditions.push(`license_end >= ?`);
+      conditions.push(`tracking_first_access >= ?`);
       params.push(date_from);
     } else if (date_to) {
-      conditions.push(`license_start <= ?`);
+      conditions.push(`tracking_first_access <= ?`);
       params.push(date_to);
     }
     
@@ -130,13 +130,13 @@ router.post("/license-details/export", async (req, res) => {
     const conditions: string[] = [];
     
     if (date_from && date_to) {
-      conditions.push(`license_start <= ? AND license_end >= ?`);
-      params.push(date_to, date_from);
+      conditions.push(`tracking_first_access >= ? AND tracking_first_access <= ?`);
+      params.push(date_from, date_to);
     } else if (date_from) {
-      conditions.push(`license_end >= ?`);
+      conditions.push(`tracking_first_access >= ?`);
       params.push(date_from);
     } else if (date_to) {
-      conditions.push(`license_start <= ?`);
+      conditions.push(`tracking_first_access <= ?`);
       params.push(date_to);
     }
     
